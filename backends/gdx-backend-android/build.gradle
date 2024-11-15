@@ -20,7 +20,7 @@ buildscript {
 	}
 }
 
-apply plugin: 'com.android.library'
+apply plugin: "com.android.library"
 
 android {
 	namespace "com.badlogic.gdx.backends.android"
@@ -51,6 +51,6 @@ android {
 }
 
 dependencies {
-	implementation project(":gdx")
+	implementation project(":libgdx:gdx")
 	compileOnly libraries.compileOnly.android
 }

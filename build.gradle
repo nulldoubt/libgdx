@@ -21,7 +21,6 @@ buildscript {
 		gradlePluginPortal()
 	}
 	dependencies {
-		classpath "com.diffplug.spotless:spotless-plugin-gradle:${versions.spotless}"
 		classpath "com.badlogicgames.gdx:gdx-jnigen-gradle:2.5.2"
 	}
 }
@@ -99,28 +98,12 @@ allprojects {
 
 	if (JavaVersion.current().isJava9Compatible()) {
 		tasks.withType(Javadoc) {
-			options.addStringOption("-release", "8");
-		}
-	}
-
-	apply plugin: "com.diffplug.spotless"
-
-	spotless {
-		lineEndings 'UNIX'
-
-		java {
-			target 'src/**/*.java', 'test/**/*.java', 'generator/**/*.java'
-			removeUnusedImports()
-			eclipse().configFile new File(rootProject.projectDir.absolutePath, 'eclipse-formatter.xml')
-		}
-		groovyGradle {
-			target '*.gradle'
-			greclipse().configFile new File(rootProject.projectDir.absolutePath, 'eclipse-formatter.xml')
+			options.addStringOption("-release", "22");
 		}
 	}
 }
 
-configure(subprojects - project(":tests:gdx-tests-android") - project(":backends:gdx-backend-android")) {
+configure(subprojects - project(":libgdx:backends:gdx-backend-android")) {
 	apply plugin: "java-library"
 
 	compileJava {
@@ -134,7 +117,7 @@ configure(subprojects - project(":tests:gdx-tests-android") - project(":backends
 	}
 }
 
-configure(subprojects - project(":backends") - project(":extensions") - project(":tests") - project(":extensions:gdx-box2d-parent")) {
+configure(subprojects - project(":libgdx:backends") - project(":libgdx:extensions")) {
 	apply plugin: "idea"
 	apply plugin: "eclipse"
 
@@ -214,7 +197,7 @@ tasks.register('fetchNatives', Copy) {
 	doNotTrackState("Don't track state")
 }
 
-apply from: rootProject.file('publish.gradle')
+//apply from: rootProject.file('publish.gradle')
 
 if(rootProject.file('override.gradle').exists())
 	apply from: rootProject.file('override.gradle')

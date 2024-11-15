@@ -14,7 +14,9 @@
  * limitations under the License.
  ******************************************************************************/
 
-apply plugin: "java"
+configure (subprojects - project(":libgdx:backends:gdx-backend-android")) {
+  apply plugin: "java"
+}
 
 if (JavaVersion.current().isJava9Compatible()) {
 	compileJava {
@@ -37,62 +39,9 @@ jar {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-task regenerateIOSHeader {
-	def robovmProject = project(":backends:gdx-backend-robovm")
-	dependsOn robovmProject.sourceSets.main.runtimeClasspath
-	doLast {
-		[IOSGLES20: "iosgl20.h", IOSGLES30: "iosgl30.h"].each {input, output ->
-			def tempDir = File.createTempDir()
-			exec {
-				workingDir robovmProject.file("src")
-				commandLine "javac"
-				args "-h", tempDir, "-cp", robovmProject.sourceSets.main.runtimeClasspath.files.collect { it.absolutePath }.join(File.pathSeparator),
-				"com/badlogic/gdx/backends/iosrobovm/${input}.java"
-			}
-			copy {
-				from tempDir
-				into "jni/iosgl"
-				rename ".*GLES([0-9]*)\\.h", "iosgl\$1.h"
-			}
-		}
-	}
-}
-
-task validateIOSHeader {
-	dependsOn regenerateIOSHeader
-	doLast {
-		for (name in ["iosgl20", "iosgl30"]) {
-			def headerContent = file("jni/iosgl/${name}.h").readLines()
-			def cppContent = file("jni/iosgl/${name}.cpp").readLines()
-			for (headerLine in headerContent) {
-				if (headerLine.startsWith("JNIEXPORT")) {
-					if (!cppContent.contains(headerLine)) {
-						throw new RuntimeException("Header file for $name contains method $headerLine, which is not contained in the implementation")
-					}
-				}
-			}
-
-			for (contentLine in cppContent) {
-				if (contentLine.startsWith("JNIEXPORT")) {
-					if (!headerContent.contains(contentLine)) {
-						throw new RuntimeException("Implementation file for $name contains method $contentLine, which is not contained in the header")
-					}
-				}
-			}
-		}
-	}
-}
-
 dependencies {
 	testImplementation libraries.junit
 	api "com.badlogicgames.gdx:gdx-jnigen-loader:2.5.2"
-}
-
-test {
-	dependsOn("validateIOSHeader")
-	testLogging {
-		events "passed", "skipped", "failed", "standardOut", "standardError"
-	}
 }
 
 processResources.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -101,9 +50,6 @@ apply plugin: "com.badlogicgames.gdx.gdx-jnigen"
 jnigen {
 	sharedLibName = "gdx"
 	temporaryDir = "../target/native"
-	all {
-		cppExcludes = ["iosgl/**"]
-	}
 	add(Windows, x32)
 	add(Windows, x64)
 	add(Linux, x64)
@@ -115,12 +61,4 @@ jnigen {
 	}
 	add(MacOsX, x64)
 	add(MacOsX, x64, ARM)
-	add(IOS) {
-		headerDirs = ["iosgl"]
-		cppExcludes = []
-		linkerFlags += " -undefined dynamic_lookup "
-	}
-	robovm {
-		extraXCFramework("libs/ObjectAL.xcframework")
-	}
 }

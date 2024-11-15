@@ -15,7 +15,7 @@
  ******************************************************************************/
 
 dependencies {
-	api project(":gdx")
+	api project(":libgdx:gdx")
 }
 
 apply plugin: "com.badlogicgames.gdx.gdx-jnigen"
@@ -96,5 +96,4 @@ jnigen {
 		linkerFlags += " -framework CoreServices -framework Carbon"
 	}
 	add(Android)
-	add(IOS)
 }
